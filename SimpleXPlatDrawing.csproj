@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageType>Dependency</PackageType>
+        <PackageVersion>1.0.0</PackageVersion>
+        <PackageId>HTLLeonding.Utility.SimpleDrawing</PackageId>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Title>HTL Leonding Simple Cross-Platform Drawing Library</Title>
+        <Authors>M. Haslinger</Authors>
+        <Description>Allows simple drawing of basic shapes on multiple operating systems via SkiaSharp.</Description>
+        <PackageTags>skia;avalonia;HTL-Leonding</PackageTags>
+        
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.0.0-preview5" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview5" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0-preview5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="readme.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+</Project>
