@@ -9,24 +9,29 @@ namespace SimpleXPlatDrawing;
 
 public static class SimpleDrawing
 {
+    private const string DefaultWindowTitle = "SimpleDrawing";
     private const double MinThickness = 0.1D;
     private static readonly IBrush defaultBrush = Brushes.Black;
     private static readonly object mutex;
     private static readonly List<DrawTask> tasks;
     private static App? _app;
     private static bool _initDone;
+    private static Action<Point>? _clickAction;
+    private static string _windowTitle;
 
     static SimpleDrawing()
     {
         tasks = new();
         _app = null;
+        _windowTitle = DefaultWindowTitle;
         mutex = new object();
     }
 
     private static int Width { get; set; }
     private static int Height { get; set; }
 
-    public static void Init(int width, int height)
+    public static void Init(int width, int height, 
+                            Action<Point>? clickAction = null, string windowTitle = DefaultWindowTitle)
     {
         if (_initDone)
         {
@@ -35,8 +40,14 @@ public static class SimpleDrawing
         }
 
         _initDone = true;
+        _clickAction = clickAction;
+        _windowTitle = windowTitle;
         Width = width;
         Height = height;
+        
+        // background, required for proper click events
+        DrawRectangle(new (0,0), new(width, height), 
+                      lineColor: Brushes.Gray, fillColor: Brushes.White);
     }
 
     public static bool DrawLine(Point start, Point end, double thickness = 1D, IBrush? color = null)
@@ -248,6 +259,8 @@ public static class SimpleDrawing
 
     private sealed class App : Application
     {
+        private const double WindowExtraSize = 6D;
+        private const double CanvasMargin = WindowExtraSize / 2D;
         private Window _mainWindow = default!;
         private Canvas? _canvas;
 
@@ -256,15 +269,22 @@ public static class SimpleDrawing
             Styles.Add(new FluentTheme());
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                _canvas = new Canvas();
+                _canvas = new Canvas
+                {
+                    Margin = new Thickness(CanvasMargin, CanvasMargin, CanvasMargin, CanvasMargin)
+                };
                 _mainWindow = new Window
                 {
-                    Title = "SimpleDrawing",
-                    Width = Width + 5,
-                    Height = Height + 5,
+                    Title = _windowTitle,
+                    Width = Width + WindowExtraSize,
+                    Height = Height + WindowExtraSize,
                     Content = _canvas
                 };
                 desktop.MainWindow = _mainWindow;
+                _canvas.PointerPressed += (_, clickEvent) =>
+                {
+                    _clickAction?.Invoke(clickEvent.GetPosition(_canvas));
+                };
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -272,10 +292,13 @@ public static class SimpleDrawing
 
         public void Refresh()
         {
-            _canvas?.InvalidateVisual();
+            Dispatcher.UIThread.Post(() =>
+            {
+                _canvas?.InvalidateVisual();
+            }, DispatcherPriority.MaxValue);
         }
 
-        private sealed class Canvas : Control
+        private sealed class Canvas : UserControl
         {
             public override void Render(DrawingContext context)
             {

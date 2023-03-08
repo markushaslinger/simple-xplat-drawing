@@ -5,6 +5,9 @@
 - Works on multiple platforms (tested Windows, Linux, Mac)
 - Based on SkiaSharp
   - via Avalonia UI 
+- User click events are registered
+
+This library is meant for simple applications so only basic functions are available to keep the API easy to use.
 
 ## Sample Usage
 
@@ -42,4 +45,18 @@ for (var i = 0; i < 10; i++)
 
 Console.Write("Press any key to exit...");
 Console.ReadKey();
+```
+
+## Click Events
+
+An `Action` can be passed to the `Init` function to register a click handler which will receive the location the user clicked within the canvas.
+
+```csharp
+SimpleDrawing.Init(600, 600, DrawCircleOnClick);
+
+async void DrawCircleOnClick(Point clickLocation)
+{
+    SimpleDrawing.DrawCircle(clickLocation, 25);
+    await SimpleDrawing.Render();
+}
 ```
