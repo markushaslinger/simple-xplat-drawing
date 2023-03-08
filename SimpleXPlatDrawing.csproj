@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageType>Dependency</PackageType>
-        <PackageVersion>1.0.0-preview2</PackageVersion>
+        <PackageVersion>1.0.0-preview3</PackageVersion>
         <PackageId>HTLLeonding.Utility.SimpleDrawing</PackageId>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -10,6 +10,9 @@
         <Authors>M. Haslinger</Authors>
         <Description>Allows simple drawing of basic shapes on multiple operating systems via SkiaSharp.</Description>
         <PackageTags>skia;avalonia;HTL-Leonding</PackageTags>
+
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>

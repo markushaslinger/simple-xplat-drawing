@@ -3,8 +3,8 @@
 - Allows for the simple drawing of basic shapes on a canvas
 - Renders the canvas in a window
 - Works on multiple platforms (tested Windows, Linux, Mac)
-- Based on SkiaSharp
-  - via Avalonia UI 
+- Based on [SkiaSharp](https://github.com/mono/SkiaSharp)
+  - via [Avalonia UI](https://github.com/AvaloniaUI/Avalonia)
 - User click events are registered
 
 This library is meant for simple applications so only basic functions are available to keep the API easy to use.
