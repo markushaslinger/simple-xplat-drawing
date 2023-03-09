@@ -116,7 +116,9 @@ public static class SimpleDrawing
     public static bool DrawRectangle(Point topLeft, Point bottomRight, double lineThickness = 1D,
                                      IBrush? lineColor = null, IBrush? fillColor = null)
     {
-        if (!ValidatePoints(topLeft, bottomRight) || lineThickness < MinThickness)
+        if (!_initDone
+            || !ValidatePoints(topLeft, bottomRight) 
+            || lineThickness < MinThickness)
         {
             return false;
         }
@@ -149,9 +151,11 @@ public static class SimpleDrawing
             new(center.X, center.Y + radiusY / 2D),
             new(center.X, center.Y - radiusY / 2D)
         };
-        if (radiusX < MinRadius || radiusY < MinRadius
-                                   || !ValidatePoints(corners.Concat(new[] { center }))
-                                   || lineThickness < MinThickness)
+        if (!_initDone
+            || radiusX < MinRadius
+            || radiusY < MinRadius
+            || !ValidatePoints(corners.Concat(new[] { center }))
+            || lineThickness < MinThickness)
         {
             return false;
         }
@@ -190,7 +194,9 @@ public static class SimpleDrawing
     /// <returns>True if the text will be drawn; false otherwise</returns>
     public static bool DrawText(Point origin, string text, double fontSize, IBrush? textColor = null)
     {
-        if (!ValidatePoint(origin) || fontSize < MinFontSize)
+        if (!_initDone 
+            || !ValidatePoint(origin) 
+            || fontSize < MinFontSize)
         {
             return false;
         }
@@ -221,7 +227,8 @@ public static class SimpleDrawing
     public static bool DrawPolygonByPath(Point[] pathPoints, double lineThickness = 1D,
                                          IBrush? lineColor = null, IBrush? fillColor = null)
     {
-        if (pathPoints.Length < 3
+        if (!_initDone
+            || pathPoints.Length < 3
             || lineThickness < MinThickness
             || !ValidatePoints(pathPoints))
         {
