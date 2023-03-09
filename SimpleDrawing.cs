@@ -13,6 +13,7 @@ public static class SimpleDrawing
     private const string DefaultWindowTitle = "SimpleDrawing";
     private const double MinThickness = 0.1D;
     private static readonly IBrush defaultBrush = Brushes.Black;
+    private static readonly IBrush whiteBrush = Brushes.White;
     private static readonly object mutex;
     private static readonly List<DrawTask> tasks;
     private static App? _app;
@@ -31,12 +32,13 @@ public static class SimpleDrawing
     private static int Width { get; set; }
     private static int Height { get; set; }
 
-    public static void Init(int width, int height, 
+    public static void Init(int width, int height,
                             Action<Point>? clickAction = null, string windowTitle = DefaultWindowTitle)
     {
         if (_initDone)
         {
             Console.WriteLine("Duplicate initialization!");
+
             return;
         }
 
@@ -45,10 +47,10 @@ public static class SimpleDrawing
         _windowTitle = windowTitle;
         Width = width;
         Height = height;
-        
+
         // background, required for proper click events
-        DrawRectangle(new (0,0), new(width, height), 
-                      lineColor: Brushes.Gray, fillColor: Brushes.White);
+        DrawRectangle(new(0, 0), new(width, height),
+                      lineColor: Brushes.Gray, fillColor: whiteBrush);
     }
 
     public static bool DrawLine(Point start, Point end, double thickness = 1D, IBrush? color = null)
@@ -83,12 +85,12 @@ public static class SimpleDrawing
     public static bool DrawEllipse(Point center, double radiusX, double radiusY, double lineThickness = 1D,
                                    IBrush? lineColor = null, IBrush? fillColor = null)
     {
-        Point[] corners = new[]
+        Point[] corners =
         {
-            new Point(center.X + radiusX / 2D, center.Y),
-            new Point(center.X - radiusX / 2D, center.Y),
-            new Point(center.X, center.Y + radiusY / 2D),
-            new Point(center.X, center.Y - radiusY / 2D)
+            new(center.X + radiusX / 2D, center.Y),
+            new(center.X - radiusX / 2D, center.Y),
+            new(center.X, center.Y + radiusY / 2D),
+            new(center.X, center.Y - radiusY / 2D)
         };
         if (radiusX < MinThickness || radiusY < MinThickness
                                    || !ValidatePoints(corners.Concat(new[] { center }))
@@ -120,10 +122,27 @@ public static class SimpleDrawing
             // invisible, don't draw at all
             return true;
         }
-        
+
         textColor ??= defaultBrush;
-        
+
         AddTask(new TextDrawTask(origin, text, fontSize, textColor));
+
+        return true;
+    }
+
+    public static bool DrawPolygonByPath(Point[] pathPoints, double lineThickness = 1D,
+                                         IBrush? lineColor = null, IBrush? fillColor = null)
+    {
+        if (pathPoints.Length < 3
+            || lineThickness < MinThickness
+            || !ValidatePoints(pathPoints))
+        {
+            return false;
+        }
+
+        lineColor ??= defaultBrush;
+
+        AddTask(new PathDrawTask(pathPoints, lineThickness, lineColor, fillColor));
 
         return true;
     }
@@ -149,16 +168,13 @@ public static class SimpleDrawing
         if (_app == null)
         {
             var appBuilder = AppBuilder.Configure<App>().UsePlatformDetect();
-            #pragma warning disable CS4014
-            Task.Run(() =>
-            {
-                appBuilder.StartWithClassicDesktopLifetime(Array.Empty<string>());
-            });
-            #pragma warning restore CS4014
+#pragma warning disable CS4014
+            Task.Run(() => { appBuilder.StartWithClassicDesktopLifetime(Array.Empty<string>()); });
+#pragma warning restore CS4014
             await Task.Delay(TimeSpan.FromSeconds(2));
             _app = appBuilder.Instance as App;
         }
-        
+
         _app?.Refresh();
     }
 
@@ -245,7 +261,8 @@ public static class SimpleDrawing
         private readonly Point _origin;
         private readonly FormattedText _text;
 
-        public TextDrawTask(Point origin, string text, double emSize, IBrush textColor) : base(0, defaultBrush)
+        public TextDrawTask(Point origin, string text, double emSize, IBrush textColor)
+            : base(0, defaultBrush)
         {
             _origin = origin;
             _text = new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
@@ -258,12 +275,49 @@ public static class SimpleDrawing
         }
     }
 
+    private sealed class PathDrawTask : DrawTask
+    {
+        private readonly IBrush? _fillColor;
+        private readonly Point[] _pathPoints;
+
+        public PathDrawTask(Point[] pathPoints, double thickness, IBrush lineColor, IBrush? fillColor)
+            : base(thickness, lineColor)
+        {
+            _fillColor = fillColor;
+            _pathPoints = pathPoints;
+        }
+
+        public override void DrawSelf(DrawingContext context)
+        {
+            var figure = new PathFigure
+            {
+                IsClosed = true,
+                IsFilled = _fillColor != null,
+                Segments = new PathSegments(),
+                StartPoint = _pathPoints[0]
+            };
+            for (var i = 1; i < _pathPoints.Length; i++)
+            {
+                figure.Segments.Add(new LineSegment
+                {
+                    Point = _pathPoints[i]
+                });
+            }
+
+            var geo = new PathGeometry
+            {
+                Figures = new PathFigures { figure }
+            };
+            context.DrawGeometry(_fillColor ?? whiteBrush, Pen, geo);
+        }
+    }
+
     private sealed class App : Application
     {
         private const double WindowExtraSize = 6D;
         private const double CanvasMargin = WindowExtraSize / 2D;
-        private Window _mainWindow = default!;
         private Canvas? _canvas;
+        private Window _mainWindow = default!;
 
         public override void OnFrameworkInitializationCompleted()
         {
@@ -282,10 +336,7 @@ public static class SimpleDrawing
                     Content = _canvas
                 };
                 desktop.MainWindow = _mainWindow;
-                _canvas.PointerPressed += (_, clickEvent) =>
-                {
-                    _clickAction?.Invoke(clickEvent.GetPosition(_canvas));
-                };
+                _canvas.PointerPressed += (_, clickEvent) => { _clickAction?.Invoke(clickEvent.GetPosition(_canvas)); };
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -293,10 +344,7 @@ public static class SimpleDrawing
 
         public void Refresh()
         {
-            Dispatcher.UIThread.Post(() =>
-            {
-                _canvas?.InvalidateVisual();
-            }, DispatcherPriority.MaxValue);
+            Dispatcher.UIThread.Post(() => { _canvas?.InvalidateVisual(); }, DispatcherPriority.MaxValue);
         }
 
         private sealed class Canvas : UserControl
@@ -308,6 +356,7 @@ public static class SimpleDrawing
                 {
                     renderTasks = tasks.ToArray();
                 }
+
                 foreach (var drawTask in renderTasks)
                 {
                     drawTask.DrawSelf(context);
