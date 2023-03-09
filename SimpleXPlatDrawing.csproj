@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageType>Dependency</PackageType>
-        <PackageVersion>1.0.0-preview5</PackageVersion>
+        <PackageVersion>1.0.0-preview6</PackageVersion>
         <PackageId>HTLLeonding.Utility.SimpleDrawing</PackageId>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -25,6 +25,10 @@
         <PackageReference Include="Avalonia" Version="11.0.0-preview5" />
         <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview5" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0-preview5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
     </ItemGroup>
 
     <ItemGroup>
