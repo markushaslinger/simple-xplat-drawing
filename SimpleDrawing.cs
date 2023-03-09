@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
@@ -8,12 +7,30 @@ using Avalonia.Threading;
 
 namespace SimpleXPlatDrawing;
 
+/// <summary>
+///     Provides a simple API for drawing basic shapes
+/// </summary>
 public static class SimpleDrawing
 {
+    /// <summary>
+    ///     The min. thickness of all lines
+    /// </summary>
+    public const double MinThickness = 0.1D;
+    
+    /// <summary>
+    ///     The min. radius of any ellipse
+    /// </summary>
+    public const double MinRadius = MinThickness;
+    
+    /// <summary>
+    ///     The min. font size of text in em.
+    /// </summary>
+    public const double MinFontSize = 4;
+    
+    internal static readonly IBrush DefaultBrush = Brushes.Black;
+    internal static readonly IBrush WhiteBrush = Brushes.White;
+    
     private const string DefaultWindowTitle = "SimpleDrawing";
-    private const double MinThickness = 0.1D;
-    private static readonly IBrush defaultBrush = Brushes.Black;
-    private static readonly IBrush whiteBrush = Brushes.White;
     private static readonly object mutex;
     private static readonly List<DrawTask> tasks;
     private static App? _app;
@@ -32,6 +49,14 @@ public static class SimpleDrawing
     private static int Width { get; set; }
     private static int Height { get; set; }
 
+    /// <summary>
+    ///     Initializes the window and canvas.
+    ///     This method must be called before any other.
+    /// </summary>
+    /// <param name="width">Width of the canvas</param>
+    /// <param name="height">Height of the canvas</param>
+    /// <param name="clickAction">An optional callback for handling user clicks</param>
+    /// <param name="windowTitle">Title of the window</param>
     public static void Init(int width, int height,
                             Action<Point>? clickAction = null, string windowTitle = DefaultWindowTitle)
     {
@@ -50,23 +75,44 @@ public static class SimpleDrawing
 
         // background, required for proper click events
         DrawRectangle(new(0, 0), new(width, height),
-                      lineColor: Brushes.Gray, fillColor: whiteBrush);
+                      lineColor: Brushes.Gray, fillColor: WhiteBrush);
     }
 
+    /// <summary>
+    ///     Draws a line on the canvas.
+    ///     Both points have to be within the bounds of the canvas.
+    /// </summary>
+    /// <param name="start">Starting point of the line</param>
+    /// <param name="end">End point of the line</param>
+    /// <param name="thickness">Thickness of the line; min. <see cref="MinThickness"/></param>
+    /// <param name="color">Color of the line</param>
+    /// <returns>True if the line can and will be drawn; false otherwise</returns>
     public static bool DrawLine(Point start, Point end, double thickness = 1D, IBrush? color = null)
     {
-        if (!ValidatePoints(start, end) || thickness < MinThickness)
+        if (!_initDone 
+            || thickness < MinThickness
+            || !ValidatePoints(start, end))
         {
             return false;
         }
 
-        color ??= defaultBrush;
+        color ??= DefaultBrush;
 
         AddTask(new LineDrawTask(start, end, thickness, color));
 
         return true;
     }
 
+    /// <summary>
+    ///     Draws a rectangle on the canvas.
+    ///     All four points of the rectangle have to be within the bounds of the canvas.
+    /// </summary>
+    /// <param name="topLeft">Top left corner of the rectangle</param>
+    /// <param name="bottomRight">Bottom right corner of the rectangle</param>
+    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
+    /// <param name="lineColor">Color of the border line</param>
+    /// <param name="fillColor">Fill color of the rectangle</param>
+    /// <returns>True if the rectangle can and will be drawn; false otherwise</returns>
     public static bool DrawRectangle(Point topLeft, Point bottomRight, double lineThickness = 1D,
                                      IBrush? lineColor = null, IBrush? fillColor = null)
     {
@@ -75,13 +121,24 @@ public static class SimpleDrawing
             return false;
         }
 
-        lineColor ??= defaultBrush;
+        lineColor ??= DefaultBrush;
 
         AddTask(new RectDrawTask(topLeft, bottomRight, lineThickness, lineColor, fillColor));
 
         return true;
     }
 
+    /// <summary>
+    ///     Draws an ellipse on the canvas.
+    ///     The entirety of the ellipse has to be within the bounds of the canvas.
+    /// </summary>
+    /// <param name="center">Center point of the ellipse</param>
+    /// <param name="radiusX">Radius of the ellipse on the x-axis; min. <see cref="MinRadius"/></param>
+    /// <param name="radiusY">Radius of the ellipse on the y-axis; min. <see cref="MinRadius"/></param>
+    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
+    /// <param name="lineColor">Color of the border line</param>
+    /// <param name="fillColor">Fill color of the ellipse</param>
+    /// <returns>True if the ellipse can and will be drawn; false otherwise</returns>
     public static bool DrawEllipse(Point center, double radiusX, double radiusY, double lineThickness = 1D,
                                    IBrush? lineColor = null, IBrush? fillColor = null)
     {
@@ -92,27 +149,48 @@ public static class SimpleDrawing
             new(center.X, center.Y + radiusY / 2D),
             new(center.X, center.Y - radiusY / 2D)
         };
-        if (radiusX < MinThickness || radiusY < MinThickness
+        if (radiusX < MinRadius || radiusY < MinRadius
                                    || !ValidatePoints(corners.Concat(new[] { center }))
                                    || lineThickness < MinThickness)
         {
             return false;
         }
 
-        lineColor ??= defaultBrush;
+        lineColor ??= DefaultBrush;
 
         AddTask(new EllipseDrawTask(center, radiusX, radiusY, lineThickness, lineColor, fillColor));
 
         return true;
     }
 
+    /// <summary>
+    ///     Draws a circle on the canvas.
+    ///     The entirety of the circle has to be within the bounds of the canvas.
+    /// </summary>
+    /// <param name="center">Center point of the circle</param>
+    /// <param name="radius">Radius of the circle</param>
+    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
+    /// <param name="lineColor">Color of the border line</param>
+    /// <param name="fillColor">Fill color of the circle</param>
+    /// <returns>True if the circle can and will be drawn; false otherwise</returns>
     public static bool DrawCircle(Point center, double radius, double lineThickness = 1D,
                                   IBrush? lineColor = null, IBrush? fillColor = null) =>
         DrawEllipse(center, radius, radius, lineThickness, lineColor, fillColor);
 
+    /// <summary>
+    ///     Draws text on the canvas.
+    ///     The starting point of the text has to be within the bounds of the canvas.
+    ///     Caution: except for the starting point boundaries of the text are not validated,
+    ///     be careful to keep it within the canvas area.
+    /// </summary>
+    /// <param name="origin">Starting point of the text</param>
+    /// <param name="text">The text to draw</param>
+    /// <param name="fontSize">Font size of the text specified in em; min. <see cref="MinFontSize"/></param>
+    /// <param name="textColor">Color of the text</param>
+    /// <returns>True if the text will be drawn; false otherwise</returns>
     public static bool DrawText(Point origin, string text, double fontSize, IBrush? textColor = null)
     {
-        if (!ValidatePoint(origin) || fontSize < MinThickness)
+        if (!ValidatePoint(origin) || fontSize < MinFontSize)
         {
             return false;
         }
@@ -123,13 +201,23 @@ public static class SimpleDrawing
             return true;
         }
 
-        textColor ??= defaultBrush;
+        textColor ??= DefaultBrush;
 
         AddTask(new TextDrawTask(origin, text, fontSize, textColor));
 
         return true;
     }
 
+    /// <summary>
+    ///     Draws a polygon defined by a closed path.
+    ///     The path is defined as a series of points, which have to be within the boundaries of the canvas.
+    ///     Use one of the specific methods for drawing simple figures like a rectangle.
+    /// </summary>
+    /// <param name="pathPoints">Points on the path; min. 3</param>
+    /// <param name="lineThickness">Thickness of the border line</param>
+    /// <param name="lineColor">Color of the border line</param>
+    /// <param name="fillColor">Fill color of the polygon</param>
+    /// <returns>True if polygon can and will be drawn; false otherwise</returns>
     public static bool DrawPolygonByPath(Point[] pathPoints, double lineThickness = 1D,
                                          IBrush? lineColor = null, IBrush? fillColor = null)
     {
@@ -140,13 +228,16 @@ public static class SimpleDrawing
             return false;
         }
 
-        lineColor ??= defaultBrush;
+        lineColor ??= DefaultBrush;
 
         AddTask(new PathDrawTask(pathPoints, lineThickness, lineColor, fillColor));
 
         return true;
     }
 
+    /// <summary>
+    ///     Clears the canvas of all previously drawn shapes.
+    /// </summary>
     public static void Clear()
     {
         lock (mutex)
@@ -155,14 +246,11 @@ public static class SimpleDrawing
         }
     }
 
-    private static void AddTask(DrawTask task)
-    {
-        lock (mutex)
-        {
-            tasks.Add(task);
-        }
-    }
-
+    /// <summary>
+    ///     Refreshes the canvas.
+    ///     Has to be called each time changes (e.g. newly added shapes) are to be displayed to the user.
+    ///     The first call will take some time until the window is initialized.
+    /// </summary>
     public static async Task Render()
     {
         if (_app == null)
@@ -177,6 +265,14 @@ public static class SimpleDrawing
 
         _app?.Refresh();
     }
+    
+    private static void AddTask(DrawTask task)
+    {
+        lock (mutex)
+        {
+            tasks.Add(task);
+        }
+    }
 
     private static bool ValidatePoints(params Point[] points) => ValidatePoints(points.AsEnumerable());
     private static bool ValidatePoints(IEnumerable<Point> points) => points.All(ValidatePoint);
@@ -185,132 +281,7 @@ public static class SimpleDrawing
         point is { X: >= 0, Y: >= 0 }
         && point.X <= Width && point.Y <= Height;
 
-    private abstract class DrawTask
-    {
-        protected DrawTask(double thickness, IBrush color)
-        {
-            Pen = new Pen(color, thickness, lineCap: PenLineCap.Round);
-        }
-
-        protected Pen Pen { get; }
-
-        public abstract void DrawSelf(DrawingContext context);
-    }
-
-    private sealed class LineDrawTask : DrawTask
-    {
-        private readonly Point _end;
-        private readonly Point _start;
-
-        public LineDrawTask(Point start, Point end, double thickness, IBrush color) : base(thickness, color)
-        {
-            _start = start;
-            _end = end;
-        }
-
-        public override void DrawSelf(DrawingContext context)
-        {
-            context.DrawLine(Pen, _start, _end);
-        }
-    }
-
-    private sealed class RectDrawTask : DrawTask
-    {
-        private readonly Point _bottomRight;
-        private readonly IBrush? _fillColor;
-        private readonly Point _topLeft;
-
-        public RectDrawTask(Point topLeft, Point bottomRight, double thickness, IBrush lineColor, IBrush? fillColor)
-            : base(thickness, lineColor)
-        {
-            _topLeft = topLeft;
-            _bottomRight = bottomRight;
-            _fillColor = fillColor;
-        }
-
-        public override void DrawSelf(DrawingContext context)
-        {
-            context.DrawRectangle(_fillColor, Pen, new(_topLeft, _bottomRight));
-        }
-    }
-
-    private sealed class EllipseDrawTask : DrawTask
-    {
-        private readonly Point _center;
-        private readonly IBrush? _fillColor;
-        private readonly double _radiusX;
-        private readonly double _radiusY;
-
-        public EllipseDrawTask(Point center, double radiusX, double radiusY, double lineThickness,
-                               IBrush lineColor, IBrush? fillColor) : base(lineThickness, lineColor)
-        {
-            _center = center;
-            _radiusX = radiusX;
-            _radiusY = radiusY;
-            _fillColor = fillColor;
-        }
-
-        public override void DrawSelf(DrawingContext context)
-        {
-            context.DrawEllipse(_fillColor, Pen, _center, _radiusX, _radiusY);
-        }
-    }
-
-    private sealed class TextDrawTask : DrawTask
-    {
-        private readonly Point _origin;
-        private readonly FormattedText _text;
-
-        public TextDrawTask(Point origin, string text, double emSize, IBrush textColor)
-            : base(0, defaultBrush)
-        {
-            _origin = origin;
-            _text = new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                        Typeface.Default, emSize, textColor);
-        }
-
-        public override void DrawSelf(DrawingContext context)
-        {
-            context.DrawText(_text, _origin);
-        }
-    }
-
-    private sealed class PathDrawTask : DrawTask
-    {
-        private readonly IBrush? _fillColor;
-        private readonly Point[] _pathPoints;
-
-        public PathDrawTask(Point[] pathPoints, double thickness, IBrush lineColor, IBrush? fillColor)
-            : base(thickness, lineColor)
-        {
-            _fillColor = fillColor;
-            _pathPoints = pathPoints;
-        }
-
-        public override void DrawSelf(DrawingContext context)
-        {
-            var figure = new PathFigure
-            {
-                IsClosed = true,
-                IsFilled = _fillColor != null,
-                Segments = new PathSegments(),
-                StartPoint = _pathPoints[0]
-            };
-            for (var i = 1; i < _pathPoints.Length; i++)
-            {
-                figure.Segments.Add(new LineSegment
-                {
-                    Point = _pathPoints[i]
-                });
-            }
-
-            var geo = new PathGeometry
-            {
-                Figures = new PathFigures { figure }
-            };
-            context.DrawGeometry(_fillColor ?? whiteBrush, Pen, geo);
-        }
-    }
+    
 
     private sealed class App : Application
     {
