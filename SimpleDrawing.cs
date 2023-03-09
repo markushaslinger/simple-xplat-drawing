@@ -73,9 +73,7 @@ public static class SimpleDrawing
         Width = width;
         Height = height;
 
-        // background, required for proper click events
-        DrawRectangle(new(0, 0), new(width, height),
-                      lineColor: Brushes.Gray, fillColor: WhiteBrush);
+        PrepareBackground();
     }
 
     /// <summary>
@@ -250,6 +248,7 @@ public static class SimpleDrawing
         lock (mutex)
         {
             tasks.Clear();
+            PrepareBackground();
         }
     }
 
@@ -288,7 +287,12 @@ public static class SimpleDrawing
         point is { X: >= 0, Y: >= 0 }
         && point.X <= Width && point.Y <= Height;
 
-    
+    private static void PrepareBackground()
+    {
+        // 'background' => required for proper click events
+        DrawRectangle(new(0, 0), new(Width, Height),
+                      lineColor: Brushes.Gray, fillColor: WhiteBrush);
+    }
 
     private sealed class App : Application
     {
