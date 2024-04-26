@@ -1,34 +1,39 @@
 ﻿using Avalonia.Input;
 using Avalonia.Media;
 using SimpleDrawing;
+using SimpleDrawing.Core;
 
-await Canvas.Init(400, 400, clickAction: DrawCircleOnClick);
+await LeoCanvas.Init(400, 400, clickAction: DrawCircleOnClick);
 
-Canvas.DrawLine(new(100, 100), new(300, 300));
-Canvas.DrawLine(new(300, 100), new(100, 300), thickness: 4, color: Brushes.Green);
-Canvas.DrawRectangle(new(50, 50), new(100, 80), lineColor: Brushes.Red);
-Canvas.DrawRectangle(new(325, 325), new(375, 375), fillColor: Brushes.Azure);
-Canvas.DrawEllipse(new(200, 300), 50, 75, 
+LeoCanvas.DrawLine(new(100, 100), new(300, 300));
+LeoCanvas.DrawLine(new(300, 100), new(100, 300), thickness: 4, color: Brushes.Green);
+LeoCanvas.DrawRectangle(new(50, 50), new(100, 80), lineColor: Brushes.Red);
+LeoCanvas.DrawRectangle(new(325, 325), new(375, 375), fillColor: Brushes.Azure);
+LeoCanvas.DrawEllipse(new(200, 300), 50, 75, 
                    lineColor: Brushes.Firebrick, fillColor: Brushes.Firebrick);
-Canvas.DrawCircle(new(350, 75), 40, lineThickness: 2.5D, 
+LeoCanvas.DrawCircle(new(350, 75), 40, lineThickness: 2.5D, 
                   lineColor: Brushes.BlueViolet, fillColor: Brushes.Gold);
-Canvas.DrawText(new(25, 350), "Hello World", 24, Brushes.Lime);
+LeoCanvas.DrawText(new(25, 350), "Hello World", 24, Brushes.Lime);
 
-Canvas.Render();
+LeoCanvas.Render();
 
-Canvas.DrawLine(new(200, 25), new(200, 375), 8);
-Canvas.Render();
+LeoCanvas.DrawLine(new(200, 25), new(200, 375), 8);
+LeoCanvas.Render();
 
 await Task.Delay(TimeSpan.FromSeconds(2));
-Canvas.Clear();
+LeoCanvas.Clear();
 var x = 50;
 for (var i = 0; i < 10; i++)
 {
-    Canvas.DrawLine(new(x, 25), new(x, 375), 8);
+    LeoCanvas.DrawLine(new(x, 25), new(x, 375), 8);
     x += 25;
-    Canvas.Render();
+    LeoCanvas.Render();
     await Task.Delay(TimeSpan.FromSeconds(1));
 }
+
+var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Data/logo.png");
+LeoCanvas.DrawImageAtLocation(imagePath, new(50, 100), new (350, 175));
+LeoCanvas.Render();
 
 Console.Write("Press any key to exit...");
 Console.ReadKey();
@@ -41,6 +46,6 @@ static void DrawCircleOnClick(ClickEvent @event)
         MouseButton.Right => 50,
         _ => 10
     };
-    Canvas.DrawCircle(@event.ClickedPoint, radius);
-    Canvas.Render();
+    LeoCanvas.DrawCircle(@event.ClickedPoint, radius);
+    LeoCanvas.Render();
 }

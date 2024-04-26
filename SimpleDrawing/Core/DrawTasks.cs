@@ -2,7 +2,7 @@
 using Avalonia;
 using Avalonia.Media;
 
-namespace SimpleDrawing;
+namespace SimpleDrawing.Core;
 
 internal delegate Pen PenFactory(PenConfig config);
 internal readonly record struct PenConfig(IBrush Color, double Thickness, PenLineCap LineCap);
@@ -54,7 +54,7 @@ internal sealed class EllipseDrawTask(
 }
 
 internal sealed class TextDrawTask(Point origin, string text, double emSize, IBrush textColor)
-    : DrawTask(0, Canvas.DefaultBrush)
+    : DrawTask(0, LeoCanvas.DefaultBrush)
 {
     private readonly FormattedText _text = new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                Typeface.Default, emSize, textColor);
@@ -89,12 +89,11 @@ internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thick
         {
             Figures = new PathFigures { figure }
         };
-        context.DrawGeometry(fillColor ?? Canvas.WhiteBrush, penFactory(PenConfig), geo);
+        context.DrawGeometry(fillColor ?? LeoCanvas.WhiteBrush, penFactory(PenConfig), geo);
     }
 }
 
-
-internal sealed class ImageDrawTask(IImage image, Rect location) : DrawTask(1, Brushes.Black)
+internal sealed class ImageDrawTask(IImage image, Rect location) : DrawTask(LeoCanvas.DefaultThickness, LeoCanvas.DefaultBrush)
 {
     public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {

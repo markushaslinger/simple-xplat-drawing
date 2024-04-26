@@ -1,28 +1,32 @@
 ﻿using Avalonia;
 using Avalonia.Media;
+using SimpleDrawing.Core;
+using SimpleDrawing.Window;
 
 namespace SimpleDrawing;
 
 /// <summary>
 ///     Provides a simple API for drawing basic shapes
 /// </summary>
-public static class Canvas
+public static class LeoCanvas
 {
     /// <summary>
     ///     The min. thickness of all lines
     /// </summary>
     public const double MinThickness = 0.1D;
-    
+
     /// <summary>
     ///     The min. radius of any ellipse
     /// </summary>
     public const double MinRadius = MinThickness;
-    
+
     /// <summary>
     ///     The min. font size of text in em.
     /// </summary>
     public const double MinFontSize = 4;
-    
+
+    internal const double DefaultThickness = 1D;
+
     internal static readonly IBrush DefaultBrush = Brushes.Black;
     internal static readonly IBrush WhiteBrush = Brushes.White;
     internal static readonly object Mutex;
@@ -31,7 +35,7 @@ public static class Canvas
     private static bool _windowInitialized;
     private static Action? _refreshWindow;
 
-    static Canvas()
+    static LeoCanvas()
     {
         Tasks = [];
         Mutex = new object();
@@ -48,7 +52,8 @@ public static class Canvas
     /// <param name="clickAction">An optional callback for handling user clicks</param>
     /// <param name="windowTitle">Title of the window</param>
     public static async Task Init(int width, int height,
-                            Action<ClickEvent>? clickAction = null, string windowTitle = Config.DefaultWindowTitle)
+                                  Action<ClickEvent>? clickAction = null,
+                                  string windowTitle = Config.DefaultWindowTitle)
     {
         if (_initDone)
         {
@@ -56,14 +61,14 @@ public static class Canvas
 
             return;
         }
-        
+
         Config.ClickAction = clickAction;
         Config.Width = width;
         Config.Height = height;
         Config.WindowTitle = windowTitle;
-        
+
         await OpenWindow();
-        
+
         _initDone = true;
 
         Clear();
@@ -75,12 +80,12 @@ public static class Canvas
     /// </summary>
     /// <param name="start">Starting point of the line</param>
     /// <param name="end">End point of the line</param>
-    /// <param name="thickness">Thickness of the line; min. <see cref="MinThickness"/></param>
+    /// <param name="thickness">Thickness of the line; min. <see cref="MinThickness" /></param>
     /// <param name="color">Color of the line</param>
     /// <returns>True if the line config is valid; false otherwise</returns>
-    public static bool DrawLine(Point start, Point end, double thickness = 1D, IBrush? color = null)
+    public static bool DrawLine(Point start, Point end, double thickness = DefaultThickness, IBrush? color = null)
     {
-        if (!_initDone 
+        if (!_initDone
             || thickness < MinThickness
             || !ValidatePoints(start, end))
         {
@@ -100,15 +105,15 @@ public static class Canvas
     /// </summary>
     /// <param name="topLeft">Top left corner of the rectangle</param>
     /// <param name="bottomRight">Bottom right corner of the rectangle</param>
-    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
+    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness" /></param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the rectangle</param>
     /// <returns>True if the rectangle config is valid; false otherwise</returns>
-    public static bool DrawRectangle(Point topLeft, Point bottomRight, double lineThickness = 1D,
+    public static bool DrawRectangle(Point topLeft, Point bottomRight, double lineThickness = DefaultThickness,
                                      IBrush? lineColor = null, IBrush? fillColor = null)
     {
         if (!_initDone
-            || !ValidatePoints(topLeft, bottomRight) 
+            || !ValidateRectPoints(topLeft, bottomRight)
             || lineThickness < MinThickness)
         {
             return false;
@@ -126,13 +131,14 @@ public static class Canvas
     ///     The entirety of the ellipse has to be within the bounds of the canvas.
     /// </summary>
     /// <param name="center">Center point of the ellipse</param>
-    /// <param name="radiusX">Radius of the ellipse on the x-axis; min. <see cref="MinRadius"/></param>
-    /// <param name="radiusY">Radius of the ellipse on the y-axis; min. <see cref="MinRadius"/></param>
-    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
+    /// <param name="radiusX">Radius of the ellipse on the x-axis; min. <see cref="MinRadius" /></param>
+    /// <param name="radiusY">Radius of the ellipse on the y-axis; min. <see cref="MinRadius" /></param>
+    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness" /></param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the ellipse</param>
     /// <returns>True if the ellipse config is valid; false otherwise</returns>
-    public static bool DrawEllipse(Point center, double radiusX, double radiusY, double lineThickness = 1D,
+    public static bool DrawEllipse(Point center, double radiusX, double radiusY,
+                                   double lineThickness = DefaultThickness,
                                    IBrush? lineColor = null, IBrush? fillColor = null)
     {
         Point[] corners =
@@ -142,7 +148,7 @@ public static class Canvas
             new Point(center.X, center.Y + radiusY / 2D),
             new Point(center.X, center.Y - radiusY / 2D)
         ];
-        
+
         if (!_initDone
             || radiusX < MinRadius
             || radiusY < MinRadius
@@ -165,11 +171,11 @@ public static class Canvas
     /// </summary>
     /// <param name="center">Center point of the circle</param>
     /// <param name="radius">Radius of the circle</param>
-    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
+    /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness" /></param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the circle</param>
     /// <returns>True if the circle config is valid; false otherwise</returns>
-    public static bool DrawCircle(Point center, double radius, double lineThickness = 1D,
+    public static bool DrawCircle(Point center, double radius, double lineThickness = DefaultThickness,
                                   IBrush? lineColor = null, IBrush? fillColor = null) =>
         DrawEllipse(center, radius, radius, lineThickness, lineColor, fillColor);
 
@@ -181,13 +187,13 @@ public static class Canvas
     /// </summary>
     /// <param name="origin">Starting point of the text</param>
     /// <param name="text">The text to draw</param>
-    /// <param name="fontSize">Font size of the text specified in em; min. <see cref="MinFontSize"/></param>
+    /// <param name="fontSize">Font size of the text specified in em; min. <see cref="MinFontSize" /></param>
     /// <param name="textColor">Color of the text</param>
     /// <returns>True if the text config is valid; false otherwise</returns>
     public static bool DrawText(Point origin, string text, double fontSize, IBrush? textColor = null)
     {
-        if (!_initDone 
-            || !ValidatePoint(origin) 
+        if (!_initDone
+            || !ValidatePoint(origin)
             || fontSize < MinFontSize)
         {
             return false;
@@ -216,7 +222,7 @@ public static class Canvas
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the polygon</param>
     /// <returns>True if polygon config is valid; false otherwise</returns>
-    public static bool DrawPolygonByPath(Point[] pathPoints, double lineThickness = 1D,
+    public static bool DrawPolygonByPath(Point[] pathPoints, double lineThickness = DefaultThickness,
                                          IBrush? lineColor = null, IBrush? fillColor = null)
     {
         if (!_initDone
@@ -232,6 +238,87 @@ public static class Canvas
         AddTask(new PathDrawTask(pathPoints, lineThickness, lineColor, fillColor));
 
         return true;
+    }
+
+    /// <summary>
+    ///     Draws an image on the canvas at the specified location.
+    ///     Does not ensure proper scaling of the image.
+    /// </summary>
+    /// <param name="image">The image to draw</param>
+    /// <param name="topLeft">Top left corner of the destination rectangle</param>
+    /// <param name="bottomRight">Bottom right corner of the destination rectangle</param>
+    /// <returns>True if the image config is valid; false otherwise</returns>
+    public static bool DrawImageAtLocation(IImage image, Point topLeft, Point bottomRight)
+    {
+        if (!_initDone
+            || !ValidateRectPoints(topLeft, bottomRight))
+        {
+            return false;
+        }
+        
+        AddTask(new ImageDrawTask(image, new Rect(topLeft, bottomRight)));
+        
+        return true;
+    }
+
+    /// <summary>
+    ///     Draws the image located at the specified path on the canvas at the specified location.
+    ///     Only a limited number of image formats are supported.
+    /// </summary>
+    /// <param name="imagePath">Absolute path to the image file</param>
+    /// <param name="topLeft">Top left corner of the destination rectangle</param>
+    /// <param name="bottomRight">Bottom right corner of the destination rectangle</param>
+    /// <returns>True if the image is found and the config is valid; false otherwise</returns>
+    public static bool DrawImageAtLocation(string imagePath, Point topLeft, Point bottomRight)
+    {
+        if (TryLoadImage(imagePath, out var image) && image is not null)
+        {
+            return DrawImageAtLocation(image, topLeft, bottomRight);
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    ///     Tries to load an image from the specified file path.
+    /// </summary>
+    /// <param name="imageFilePath">Absolute path to the image file</param>
+    /// <param name="image">Set to the loaded image if loading is successful; null otherwise</param>
+    /// <returns>True if the image could be loaded; false otherwise</returns>
+    public static bool TryLoadImage(string imageFilePath, out IImage? image)
+    {
+        var imageLoader = ImageLoader.FromPath(imageFilePath);
+        image = null;
+        
+        switch (imageLoader.ImageState)
+        {
+            case ImageLoader.State.Uninitialized:
+            case ImageLoader.State.UnknownError:
+            case ImageLoader.State.Loaded when imageLoader.Image is null:
+            {
+                Console.WriteLine("Failed to load image");
+
+                return false;
+            }
+            case ImageLoader.State.FileDoesNotExist:
+            {
+                Console.WriteLine($"Failed to load image: file '{imageFilePath}' does not exist");
+
+                return false;
+            }
+            case ImageLoader.State.FileFormatNotSupported:
+            {
+                Console.WriteLine("Failed to load image: file format not supported");
+
+                return false;
+            }
+            case ImageLoader.State.Loaded when imageLoader.Image is not null:
+            {
+                image = imageLoader.Image;
+                return true;
+            }
+            default: throw new ArgumentOutOfRangeException(nameof(imageLoader.ImageState), imageLoader.ImageState, "Unknown image loading state");
+        }
     }
 
     /// <summary>
@@ -275,11 +362,11 @@ public static class Canvas
         var finalDelay = TimeSpan.FromSeconds(1);
         var delay = TimeSpan.FromMilliseconds(50);
         var maxWaitTime = TimeSpan.FromSeconds(10);
-        
+
         TriggerWindowCreation();
-        
+
         await Task.Delay(initialDelay);
-        
+
         var waitStartTime = DateTime.Now;
         var waitEndTime = waitStartTime + maxWaitTime;
         while (!_windowInitialized && DateTime.Now < waitEndTime)
@@ -306,14 +393,14 @@ public static class Canvas
                 var exitCode = BuildAvaloniaApp()
                     .StartWithClassicDesktopLifetime([]);
                 Console.WriteLine($"Window exited with code {exitCode}");
-            } 
+            }
             catch (Exception e)
             {
                 _windowInitialized = false;
                 Console.WriteLine($"Failed to initialize the window: {e.Message}");
             }
         });
-        
+
         return;
 
         static AppBuilder BuildAvaloniaApp() =>
@@ -322,7 +409,7 @@ public static class Canvas
                       .WithInterFont()
                       .LogToTrace();
     }
-    
+
     private static void AddTask(DrawTask task)
     {
         lock (Mutex)
@@ -334,9 +421,16 @@ public static class Canvas
     private static bool ValidatePoints(params Point[] points) => ValidatePoints(points.AsEnumerable());
     private static bool ValidatePoints(IEnumerable<Point> points) => points.All(ValidatePoint);
 
+    private static bool ValidateRectPoints(Point topLeft, Point bottomRight) =>
+        ValidatePoint(topLeft)
+        && ValidatePoint(bottomRight)
+        && topLeft.X < bottomRight.X
+        && topLeft.Y < bottomRight.Y;
+
     private static bool ValidatePoint(Point point) =>
         point is { X: >= 0, Y: >= 0 }
-        && point.X <= Config.Width && point.Y <= Config.Height;
+        && point.X <= Config.Width
+        && point.Y <= Config.Height;
 
     private static void PrepareBackground()
     {

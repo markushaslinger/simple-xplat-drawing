@@ -2,16 +2,16 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace SimpleDrawing;
+namespace SimpleDrawing.Core;
 
 internal sealed class DrawingCanvas: UserControl
 {
     public override void Render(DrawingContext context)
     {
         ImmutableArray<DrawTask> renderTasks;
-        lock (Canvas.Mutex)
+        lock (LeoCanvas.Mutex)
         {
-            renderTasks = Canvas.Tasks.ToImmutableArray();
+            renderTasks = LeoCanvas.Tasks.ToImmutableArray();
         }
         
         foreach (var drawTask in renderTasks)

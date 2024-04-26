@@ -1,12 +1,12 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Threading;
+using SimpleDrawing.Core;
 
-namespace SimpleDrawing;
+namespace SimpleDrawing.Window;
 
-internal partial class MainWindow : Window
+internal partial class MainWindow : Avalonia.Controls.Window
 {
     private const double WindowExtraSize = 6D;
 
@@ -38,7 +38,7 @@ internal partial class MainWindow : Window
         base.OnApplyTemplate(e);
         MainCanvas.PointerPressed += HandleClick;
         
-        Canvas.SetWindowInitialized(Refresh);
+        LeoCanvas.SetWindowInitialized(Refresh);
     }
 
     private void Refresh()

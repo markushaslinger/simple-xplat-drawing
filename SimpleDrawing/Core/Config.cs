@@ -1,4 +1,4 @@
-﻿namespace SimpleDrawing;
+﻿namespace SimpleDrawing.Core;
 
 internal static class Config
 {
