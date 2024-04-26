@@ -10,6 +10,7 @@
         <Authors>M. Haslinger</Authors>
         <Description>Allows simple drawing of basic shapes on multiple operating systems via SkiaSharp.</Description>
         <PackageTags>skia;avalonia;HTL-Leonding</PackageTags>
+        <RepositoryUrl>https://github.com/markushaslinger/simple-xplat-drawing</RepositoryUrl>
 
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
