@@ -274,7 +274,7 @@ public static class Canvas
         var initialDelay = TimeSpan.FromSeconds(1);
         var finalDelay = TimeSpan.FromSeconds(1);
         var delay = TimeSpan.FromMilliseconds(50);
-        var maxWaitTime = TimeSpan.FromSeconds(100);
+        var maxWaitTime = TimeSpan.FromSeconds(10);
         
         TriggerWindowCreation();
         
