@@ -1,21 +1,8 @@
-# SimpleDrawing - Cross Platform
-
-- Allows for the simple drawing of basic shapes on a canvas
-- Renders the canvas in a window
-- Works on multiple platforms (tested Windows, Linux; should also work on Mac)
-- Based on [SkiaSharp](https://github.com/mono/SkiaSharp)
-  - via [Avalonia UI](https://github.com/AvaloniaUI/Avalonia)
-- User click events are registered
-
-This library is meant for simple applications so only basic functions are available to keep the API easy to use.
-
-## Sample Usage
-
-```csharp
+﻿using Avalonia.Input;
 using Avalonia.Media;
 using SimpleXPlatDrawing;
 
-await SimpleDrawing.Init(400, 400);
+await SimpleDrawing.Init(400, 400, clickAction: HandleClick);
 
 SimpleDrawing.DrawLine(new(100, 100), new(300, 300));
 SimpleDrawing.DrawLine(new(300, 100), new(100, 300), thickness: 4, color: Brushes.Green);
@@ -45,14 +32,12 @@ for (var i = 0; i < 10; i++)
 
 Console.Write("Press any key to exit...");
 Console.ReadKey();
-```
 
-## Click Events
 
-An `Action` can be passed to the `Init` function to register a click handler which will receive the location the user clicked within the canvas as well as information if the left or right mouse button was used.
-
-```csharp
-await SimpleDrawing.Init(600, 600, clickAction: DrawCircleOnClick);
+static void HandleClick(ClickEvent @event)
+{
+    Console.WriteLine($"{@event.Button} click at {@event.ClickedPoint}");
+}
 
 static void DrawCircleOnClick(ClickEvent @event)
 {
@@ -65,4 +50,3 @@ static void DrawCircleOnClick(ClickEvent @event)
     SimpleDrawing.DrawCircle(@event.ClickedPoint, radius);
     SimpleDrawing.Render();
 }
-```

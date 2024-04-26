@@ -29,27 +29,19 @@ public static class SimpleDrawing
     
     internal static readonly IBrush DefaultBrush = Brushes.Black;
     internal static readonly IBrush WhiteBrush = Brushes.White;
-    
-    private const string DefaultWindowTitle = "SimpleDrawing";
-    private static readonly object mutex;
-    private static readonly List<DrawTask> tasks;
-    private static App? _app;
+    internal static readonly object Mutex;
+    internal static readonly List<DrawTask> Tasks;
     private static bool _initDone;
-    private static Action<Point>? _clickAction;
-    private static string _windowTitle;
     private static bool _windowInitialized;
+    private static Action? _refreshWindow;
 
     static SimpleDrawing()
     {
-        tasks = [];
-        _app = null;
-        _windowTitle = DefaultWindowTitle;
-        mutex = new object();
+        Tasks = [];
+        Mutex = new object();
         _windowInitialized = false;
+        _refreshWindow = null;
     }
-
-    private static int Width { get; set; }
-    private static int Height { get; set; }
 
     /// <summary>
     ///     Initializes the window and canvas.
@@ -59,8 +51,8 @@ public static class SimpleDrawing
     /// <param name="height">Height of the canvas</param>
     /// <param name="clickAction">An optional callback for handling user clicks</param>
     /// <param name="windowTitle">Title of the window</param>
-    public static void Init(int width, int height,
-                            Action<Point>? clickAction = null, string windowTitle = DefaultWindowTitle)
+    public static async Task Init(int width, int height,
+                            Action<ClickEvent>? clickAction = null, string windowTitle = Config.DefaultWindowTitle)
     {
         if (_initDone)
         {
@@ -68,14 +60,17 @@ public static class SimpleDrawing
 
             return;
         }
-
+        
+        Config.ClickAction = clickAction;
+        Config.Width = width;
+        Config.Height = height;
+        Config.WindowTitle = windowTitle;
+        
+        await OpenWindow();
+        
         _initDone = true;
-        _clickAction = clickAction;
-        _windowTitle = windowTitle;
-        Width = width;
-        Height = height;
 
-        PrepareBackground();
+        Clear();
     }
 
     /// <summary>
@@ -86,7 +81,7 @@ public static class SimpleDrawing
     /// <param name="end">End point of the line</param>
     /// <param name="thickness">Thickness of the line; min. <see cref="MinThickness"/></param>
     /// <param name="color">Color of the line</param>
-    /// <returns>True if the line can and will be drawn; false otherwise</returns>
+    /// <returns>True if the line config is valid; false otherwise</returns>
     public static bool DrawLine(Point start, Point end, double thickness = 1D, IBrush? color = null)
     {
         if (!_initDone 
@@ -112,7 +107,7 @@ public static class SimpleDrawing
     /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the rectangle</param>
-    /// <returns>True if the rectangle can and will be drawn; false otherwise</returns>
+    /// <returns>True if the rectangle config is valid; false otherwise</returns>
     public static bool DrawRectangle(Point topLeft, Point bottomRight, double lineThickness = 1D,
                                      IBrush? lineColor = null, IBrush? fillColor = null)
     {
@@ -140,7 +135,7 @@ public static class SimpleDrawing
     /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the ellipse</param>
-    /// <returns>True if the ellipse can and will be drawn; false otherwise</returns>
+    /// <returns>True if the ellipse config is valid; false otherwise</returns>
     public static bool DrawEllipse(Point center, double radiusX, double radiusY, double lineThickness = 1D,
                                    IBrush? lineColor = null, IBrush? fillColor = null)
     {
@@ -177,7 +172,7 @@ public static class SimpleDrawing
     /// <param name="lineThickness">Thickness of the border line; min. <see cref="MinThickness"/></param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the circle</param>
-    /// <returns>True if the circle can and will be drawn; false otherwise</returns>
+    /// <returns>True if the circle config is valid; false otherwise</returns>
     public static bool DrawCircle(Point center, double radius, double lineThickness = 1D,
                                   IBrush? lineColor = null, IBrush? fillColor = null) =>
         DrawEllipse(center, radius, radius, lineThickness, lineColor, fillColor);
@@ -192,7 +187,7 @@ public static class SimpleDrawing
     /// <param name="text">The text to draw</param>
     /// <param name="fontSize">Font size of the text specified in em; min. <see cref="MinFontSize"/></param>
     /// <param name="textColor">Color of the text</param>
-    /// <returns>True if the text can and will be drawn; false otherwise</returns>
+    /// <returns>True if the text config is valid; false otherwise</returns>
     public static bool DrawText(Point origin, string text, double fontSize, IBrush? textColor = null)
     {
         if (!_initDone 
@@ -224,7 +219,7 @@ public static class SimpleDrawing
     /// <param name="lineThickness">Thickness of the border line</param>
     /// <param name="lineColor">Color of the border line</param>
     /// <param name="fillColor">Fill color of the polygon</param>
-    /// <returns>True if polygon can and will be drawn; false otherwise</returns>
+    /// <returns>True if polygon config is valid; false otherwise</returns>
     public static bool DrawPolygonByPath(Point[] pathPoints, double lineThickness = 1D,
                                          IBrush? lineColor = null, IBrush? fillColor = null)
     {
@@ -248,9 +243,9 @@ public static class SimpleDrawing
     /// </summary>
     public static void Clear()
     {
-        lock (mutex)
+        lock (Mutex)
         {
-            tasks.Clear();
+            Tasks.Clear();
             PrepareBackground();
         }
     }
@@ -260,33 +255,61 @@ public static class SimpleDrawing
     ///     Has to be called all time changes (e.g., newly added shapes) are to be displayed to the user.
     ///     The first call will take some time until the window is initialized.
     /// </summary>
-    public static async ValueTask Render()
+    public static void Render()
     {
-        if (_app == null)
+        if (!_windowInitialized)
         {
-            await OpenWindow();
+            Console.WriteLine("Window not initialized yet!");
+
+            return;
         }
 
-        _app?.Refresh();
+        _refreshWindow?.Invoke();
+    }
+
+    internal static void SetWindowInitialized(Action refreshWindow)
+    {
+        _windowInitialized = true;
+        _refreshWindow = refreshWindow;
     }
 
     private static async Task OpenWindow()
     {
         var initialDelay = TimeSpan.FromSeconds(1);
+        var finalDelay = TimeSpan.FromSeconds(1);
         var delay = TimeSpan.FromMilliseconds(50);
-        var maxWaitTime = TimeSpan.FromSeconds(10);
+        var maxWaitTime = TimeSpan.FromSeconds(100);
         
-        var appBuilder = AppBuilder.Configure<App>()
-                                   .UsePlatformDetect()
-                                   .WithInterFont()
-                                   .LogToTrace();
+        TriggerWindowCreation();
         
-#pragma warning disable CS4014
+        await Task.Delay(initialDelay);
+        
+        var waitStartTime = DateTime.Now;
+        var waitEndTime = waitStartTime + maxWaitTime;
+        while (!_windowInitialized && DateTime.Now < waitEndTime)
+        {
+            await Task.Delay(delay);
+        }
+
+        if (!_windowInitialized)
+        {
+            Console.WriteLine("Failed to initialize application window!");
+        }
+        else
+        {
+            await Task.Delay(finalDelay);
+        }
+    }
+
+    private static void TriggerWindowCreation()
+    {
         Task.Run(() =>
         {
             try
             {
-                appBuilder.StartWithClassicDesktopLifetime([]);
+                var exitCode = BuildAvaloniaApp()
+                    .StartWithClassicDesktopLifetime([]);
+                Console.WriteLine($"Window exited with code {exitCode}");
             } 
             catch (Exception e)
             {
@@ -294,29 +317,21 @@ public static class SimpleDrawing
                 Console.WriteLine($"Failed to initialize the window: {e.Message}");
             }
         });
-#pragma warning restore CS4014
         
-        await Task.Delay(initialDelay);
-        
-        var waitStartTime = DateTime.Now;
-        while (!_windowInitialized && DateTime.Now - waitStartTime < maxWaitTime)
-        {
-            await Task.Delay(delay);
-        }
+        return;
 
-        if (!_windowInitialized || appBuilder.Instance is not App app)
-        {
-            throw new InvalidOperationException("Failed to initialize the window!");
-        }
-
-        _app = app;
+        static AppBuilder BuildAvaloniaApp() =>
+            AppBuilder.Configure<App>()
+                      .UsePlatformDetect()
+                      .WithInterFont()
+                      .LogToTrace();
     }
     
     private static void AddTask(DrawTask task)
     {
-        lock (mutex)
+        lock (Mutex)
         {
-            tasks.Add(task);
+            Tasks.Add(task);
         }
     }
 
@@ -325,66 +340,12 @@ public static class SimpleDrawing
 
     private static bool ValidatePoint(Point point) =>
         point is { X: >= 0, Y: >= 0 }
-        && point.X <= Width && point.Y <= Height;
+        && point.X <= Config.Width && point.Y <= Config.Height;
 
     private static void PrepareBackground()
     {
         // 'background' => required for proper click events
-        DrawRectangle(new Point(0, 0), new Point(Width, Height),
+        DrawRectangle(new Point(0, 0), new Point(Config.Width, Config.Height),
                       lineColor: Brushes.Gray, fillColor: WhiteBrush);
-    }
-
-    private sealed class App : Application
-    {
-        private const double WindowExtraSize = 6D;
-        private const double CanvasMargin = WindowExtraSize / 2D;
-        private Canvas? _canvas;
-        private Window _mainWindow = default!;
-
-        public override void OnFrameworkInitializationCompleted()
-        {
-            Styles.Add(new FluentTheme());
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                _canvas = new Canvas
-                {
-                    Margin = new Thickness(CanvasMargin, CanvasMargin, CanvasMargin, CanvasMargin)
-                };
-                _mainWindow = new Window
-                {
-                    Title = _windowTitle,
-                    Width = Width + WindowExtraSize,
-                    Height = Height + WindowExtraSize,
-                    Content = _canvas
-                };
-                desktop.MainWindow = _mainWindow;
-                _canvas.PointerPressed += (_, clickEvent) => { _clickAction?.Invoke(clickEvent.GetPosition(_canvas)); };
-            }
-
-            base.OnFrameworkInitializationCompleted();
-            _windowInitialized = true;
-        }
-
-        public void Refresh()
-        {
-            Dispatcher.UIThread.Post(() => { _canvas?.InvalidateVisual(); }, DispatcherPriority.MaxValue);
-        }
-
-        private sealed class Canvas : UserControl
-        {
-            public override void Render(DrawingContext context)
-            {
-                DrawTask[] renderTasks;
-                lock (mutex)
-                {
-                    renderTasks = tasks.ToArray();
-                }
-
-                foreach (var drawTask in renderTasks)
-                {
-                    drawTask.DrawSelf(context);
-                }
-            }
-        }
     }
 }

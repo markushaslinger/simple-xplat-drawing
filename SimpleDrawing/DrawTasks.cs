@@ -6,17 +6,21 @@ namespace SimpleXPlatDrawing;
 
 internal abstract class DrawTask(double thickness, IBrush color)
 {
-    protected Pen Pen { get; } = new(color, thickness, lineCap: PenLineCap.Round);
+    protected PenConfig PenConfig { get; } = new(color, thickness, PenLineCap.Round);
 
-    public abstract void DrawSelf(DrawingContext context);
+    public abstract void DrawSelf(DrawingContext context, PenFactory penFactory);
 }
+
+internal delegate Pen PenFactory(PenConfig config);
+internal readonly record struct PenConfig(IBrush Color, double Thickness, PenLineCap LineCap);
 
 internal sealed class LineDrawTask(Point start, Point end, double thickness, IBrush color)
     : DrawTask(thickness, color)
 {
-    public override void DrawSelf(DrawingContext context)
+    public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {
-        context.DrawLine(Pen, start, end);
+        var pen = penFactory(PenConfig);
+        context.DrawLine(pen, start, end);
     }
 }
 
@@ -28,9 +32,9 @@ internal sealed class RectDrawTask(
     IBrush? fillColor)
     : DrawTask(thickness, lineColor)
 {
-    public override void DrawSelf(DrawingContext context)
+    public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {
-        context.DrawRectangle(fillColor, Pen, new Rect(topLeft, bottomRight));
+        context.DrawRectangle(fillColor, penFactory(PenConfig), new Rect(topLeft, bottomRight));
     }
 }
 
@@ -43,9 +47,9 @@ internal sealed class EllipseDrawTask(
     IBrush? fillColor)
     : DrawTask(lineThickness, lineColor)
 {
-    public override void DrawSelf(DrawingContext context)
+    public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {
-        context.DrawEllipse(fillColor, Pen, center, radiusX, radiusY);
+        context.DrawEllipse(fillColor, penFactory(PenConfig), center, radiusX, radiusY);
     }
 }
 
@@ -55,7 +59,7 @@ internal sealed class TextDrawTask(Point origin, string text, double emSize, IBr
     private readonly FormattedText _text = new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                Typeface.Default, emSize, textColor);
 
-    public override void DrawSelf(DrawingContext context)
+    public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {
         context.DrawText(_text, origin);
     }
@@ -64,7 +68,7 @@ internal sealed class TextDrawTask(Point origin, string text, double emSize, IBr
 internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thickness, IBrush lineColor, IBrush? fillColor)
     : DrawTask(thickness, lineColor)
 {
-    public override void DrawSelf(DrawingContext context)
+    public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {
         var figure = new PathFigure
         {
@@ -85,6 +89,6 @@ internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thick
         {
             Figures = new PathFigures { figure }
         };
-        context.DrawGeometry(fillColor ?? SimpleDrawing.WhiteBrush, Pen, geo);
+        context.DrawGeometry(fillColor ?? SimpleDrawing.WhiteBrush, penFactory(PenConfig), geo);
     }
 }

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageType>Dependency</PackageType>
-        <PackageVersion>1.0.0-preview9</PackageVersion>
+        <PackageVersion>1.0.0</PackageVersion>
         <PackageId>HTLLeonding.Utility.SimpleDrawing</PackageId>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -15,10 +15,15 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <LangVersion>12</LangVersion>
+
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,6 +31,8 @@
         <PackageReference Include="Avalonia.Desktop" Version="11.0.10" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
     </ItemGroup>
 
     <ItemGroup>
@@ -33,7 +40,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="readme.md" Pack="true" PackagePath="" />
+        <None Include="../readme.md" Pack="true" PackagePath="" />
     </ItemGroup>
 
 </Project>

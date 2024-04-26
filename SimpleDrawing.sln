@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleXPlatDrawing", "SimpleDrawing\SimpleXPlatDrawing.csproj", "{DAE750D2-C8B6-49BD-BED6-2EE1339C8CD2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDrawingDemo", "SimpleDrawing.Demo\SimpleDrawingDemo.csproj", "{064CB536-FC72-42D2-A653-893FEAD8C23C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DAE750D2-C8B6-49BD-BED6-2EE1339C8CD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAE750D2-C8B6-49BD-BED6-2EE1339C8CD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAE750D2-C8B6-49BD-BED6-2EE1339C8CD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAE750D2-C8B6-49BD-BED6-2EE1339C8CD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{064CB536-FC72-42D2-A653-893FEAD8C23C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{064CB536-FC72-42D2-A653-893FEAD8C23C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{064CB536-FC72-42D2-A653-893FEAD8C23C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{064CB536-FC72-42D2-A653-893FEAD8C23C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
