@@ -44,4 +44,15 @@
         <None Include="../readme.md" Pack="true" PackagePath="" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="Window\App.axaml.cs">
+        <DependentUpon>App.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Window\MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
 </Project>

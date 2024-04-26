@@ -4,15 +4,15 @@ using Avalonia.Media;
 
 namespace SimpleDrawing;
 
+internal delegate Pen PenFactory(PenConfig config);
+internal readonly record struct PenConfig(IBrush Color, double Thickness, PenLineCap LineCap);
+
 internal abstract class DrawTask(double thickness, IBrush color)
 {
     protected PenConfig PenConfig { get; } = new(color, thickness, PenLineCap.Round);
 
     public abstract void DrawSelf(DrawingContext context, PenFactory penFactory);
 }
-
-internal delegate Pen PenFactory(PenConfig config);
-internal readonly record struct PenConfig(IBrush Color, double Thickness, PenLineCap LineCap);
 
 internal sealed class LineDrawTask(Point start, Point end, double thickness, IBrush color)
     : DrawTask(thickness, color)
@@ -90,5 +90,14 @@ internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thick
             Figures = new PathFigures { figure }
         };
         context.DrawGeometry(fillColor ?? Canvas.WhiteBrush, penFactory(PenConfig), geo);
+    }
+}
+
+
+internal sealed class ImageDrawTask(IImage image, Rect location) : DrawTask(1, Brushes.Black)
+{
+    public override void DrawSelf(DrawingContext context, PenFactory penFactory)
+    {
+        context.DrawImage(image, location);
     }
 }
