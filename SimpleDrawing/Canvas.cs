@@ -1,16 +1,12 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
-using Avalonia.Themes.Fluent;
-using Avalonia.Threading;
 
-namespace SimpleXPlatDrawing;
+namespace SimpleDrawing;
 
 /// <summary>
 ///     Provides a simple API for drawing basic shapes
 /// </summary>
-public static class SimpleDrawing
+public static class Canvas
 {
     /// <summary>
     ///     The min. thickness of all lines
@@ -35,7 +31,7 @@ public static class SimpleDrawing
     private static bool _windowInitialized;
     private static Action? _refreshWindow;
 
-    static SimpleDrawing()
+    static Canvas()
     {
         Tasks = [];
         Mutex = new object();

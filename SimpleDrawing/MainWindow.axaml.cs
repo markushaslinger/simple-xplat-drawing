@@ -4,7 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Threading;
 
-namespace SimpleXPlatDrawing;
+namespace SimpleDrawing;
 
 internal partial class MainWindow : Window
 {
@@ -38,7 +38,7 @@ internal partial class MainWindow : Window
         base.OnApplyTemplate(e);
         MainCanvas.PointerPressed += HandleClick;
         
-        SimpleDrawing.SetWindowInitialized(Refresh);
+        Canvas.SetWindowInitialized(Refresh);
     }
 
     private void Refresh()

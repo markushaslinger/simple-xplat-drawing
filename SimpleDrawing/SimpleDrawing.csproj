@@ -24,6 +24,7 @@
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <RootNamespace>SimpleXPlatDrawing</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

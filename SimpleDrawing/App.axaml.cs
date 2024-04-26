@@ -2,7 +2,7 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace SimpleXPlatDrawing;
+namespace SimpleDrawing;
 
 internal partial class App : Application
 {

@@ -2,7 +2,7 @@
 using Avalonia;
 using Avalonia.Media;
 
-namespace SimpleXPlatDrawing;
+namespace SimpleDrawing;
 
 internal abstract class DrawTask(double thickness, IBrush color)
 {
@@ -54,7 +54,7 @@ internal sealed class EllipseDrawTask(
 }
 
 internal sealed class TextDrawTask(Point origin, string text, double emSize, IBrush textColor)
-    : DrawTask(0, SimpleDrawing.DefaultBrush)
+    : DrawTask(0, Canvas.DefaultBrush)
 {
     private readonly FormattedText _text = new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                Typeface.Default, emSize, textColor);
@@ -89,6 +89,6 @@ internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thick
         {
             Figures = new PathFigures { figure }
         };
-        context.DrawGeometry(fillColor ?? SimpleDrawing.WhiteBrush, penFactory(PenConfig), geo);
+        context.DrawGeometry(fillColor ?? Canvas.WhiteBrush, penFactory(PenConfig), geo);
     }
 }

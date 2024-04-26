@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SimpleDrawing\SimpleXPlatDrawing.csproj" />
+    <ProjectReference Include="..\SimpleDrawing\SimpleDrawing.csproj" />
   </ItemGroup>
 
 </Project>

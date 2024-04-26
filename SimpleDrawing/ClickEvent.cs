@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Input;
 
-namespace SimpleXPlatDrawing;
+namespace SimpleDrawing;
 
 /// <summary>
 ///     Represents a click event.

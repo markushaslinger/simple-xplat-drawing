@@ -1,4 +1,4 @@
-﻿namespace SimpleXPlatDrawing;
+﻿namespace SimpleDrawing;
 
 internal static class Config
 {
