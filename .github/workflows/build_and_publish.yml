@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup NuGet
-        uses: NuGet/setup-nuget@2
+        uses: NuGet/setup-nuget@v2
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
