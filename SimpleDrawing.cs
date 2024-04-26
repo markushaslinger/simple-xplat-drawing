@@ -37,13 +37,15 @@ public static class SimpleDrawing
     private static bool _initDone;
     private static Action<Point>? _clickAction;
     private static string _windowTitle;
+    private static bool _windowInitialized;
 
     static SimpleDrawing()
     {
-        tasks = new();
+        tasks = [];
         _app = null;
         _windowTitle = DefaultWindowTitle;
         mutex = new object();
+        _windowInitialized = false;
     }
 
     private static int Width { get; set; }
@@ -143,12 +145,13 @@ public static class SimpleDrawing
                                    IBrush? lineColor = null, IBrush? fillColor = null)
     {
         Point[] corners =
-        {
-            new(center.X + radiusX / 2D, center.Y),
-            new(center.X - radiusX / 2D, center.Y),
-            new(center.X, center.Y + radiusY / 2D),
-            new(center.X, center.Y - radiusY / 2D)
-        };
+        [
+            new Point(center.X + radiusX / 2D, center.Y),
+            new Point(center.X - radiusX / 2D, center.Y),
+            new Point(center.X, center.Y + radiusY / 2D),
+            new Point(center.X, center.Y - radiusY / 2D)
+        ];
+        
         if (!_initDone
             || radiusX < MinRadius
             || radiusY < MinRadius
@@ -189,7 +192,7 @@ public static class SimpleDrawing
     /// <param name="text">The text to draw</param>
     /// <param name="fontSize">Font size of the text specified in em; min. <see cref="MinFontSize"/></param>
     /// <param name="textColor">Color of the text</param>
-    /// <returns>True if the text will be drawn; false otherwise</returns>
+    /// <returns>True if the text can and will be drawn; false otherwise</returns>
     public static bool DrawText(Point origin, string text, double fontSize, IBrush? textColor = null)
     {
         if (!_initDone 
@@ -254,22 +257,48 @@ public static class SimpleDrawing
 
     /// <summary>
     ///     Refreshes the canvas.
-    ///     Has to be called each time changes (e.g. newly added shapes) are to be displayed to the user.
+    ///     Has to be called all time changes (e.g., newly added shapes) are to be displayed to the user.
     ///     The first call will take some time until the window is initialized.
     /// </summary>
-    public static async Task Render()
+    public static async ValueTask Render()
     {
         if (_app == null)
         {
-            var appBuilder = AppBuilder.Configure<App>().UsePlatformDetect();
-#pragma warning disable CS4014
-            Task.Run(() => { appBuilder.StartWithClassicDesktopLifetime(Array.Empty<string>()); });
-#pragma warning restore CS4014
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            _app = appBuilder.Instance as App;
+            await OpenWindow();
         }
 
         _app?.Refresh();
+    }
+
+    private static async Task OpenWindow()
+    {
+        var initialDelay = TimeSpan.FromSeconds(1);
+        var delay = TimeSpan.FromMilliseconds(50);
+        var maxWaitTime = TimeSpan.FromSeconds(10);
+        
+        var appBuilder = AppBuilder.Configure<App>()
+                                   .UsePlatformDetect()
+                                   .WithInterFont()
+                                   .LogToTrace();
+        
+#pragma warning disable CS4014
+        Task.Run(() => { appBuilder.StartWithClassicDesktopLifetime([]); });
+#pragma warning restore CS4014
+        
+        await Task.Delay(initialDelay);
+        
+        var waitStartTime = DateTime.Now;
+        while (!_windowInitialized && DateTime.Now - waitStartTime < maxWaitTime)
+        {
+            await Task.Delay(delay);
+        }
+
+        if (!_windowInitialized || appBuilder.Instance is not App app)
+        {
+            throw new InvalidOperationException("Failed to initialize the window!");
+        }
+
+        _app = app;
     }
     
     private static void AddTask(DrawTask task)
@@ -290,7 +319,7 @@ public static class SimpleDrawing
     private static void PrepareBackground()
     {
         // 'background' => required for proper click events
-        DrawRectangle(new(0, 0), new(Width, Height),
+        DrawRectangle(new Point(0, 0), new Point(Width, Height),
                       lineColor: Brushes.Gray, fillColor: WhiteBrush);
     }
 
@@ -322,6 +351,7 @@ public static class SimpleDrawing
             }
 
             base.OnFrameworkInitializationCompleted();
+            _windowInitialized = true;
         }
 
         public void Refresh()
