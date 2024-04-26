@@ -282,7 +282,18 @@ public static class SimpleDrawing
                                    .LogToTrace();
         
 #pragma warning disable CS4014
-        Task.Run(() => { appBuilder.StartWithClassicDesktopLifetime([]); });
+        Task.Run(() =>
+        {
+            try
+            {
+                appBuilder.StartWithClassicDesktopLifetime([]);
+            } 
+            catch (Exception e)
+            {
+                _windowInitialized = false;
+                Console.WriteLine($"Failed to initialize the window: {e.Message}");
+            }
+        });
 #pragma warning restore CS4014
         
         await Task.Delay(initialDelay);
