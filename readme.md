@@ -17,7 +17,7 @@ using Avalonia.Media;
 using SimpleDrawing;
 using SimpleDrawing.Core;
 
-LeoCanvas.Init(400, 400, clickAction: DrawCircleOnClick);
+LeoCanvas.Init(Run, 400, 400, clickAction: DrawCircleOnClick);
 
 return;
 
