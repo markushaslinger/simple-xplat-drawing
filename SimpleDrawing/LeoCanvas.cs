@@ -47,13 +47,14 @@ public static class LeoCanvas
     ///     Initializes the window and canvas.
     ///     This method must be called before any other.
     /// </summary>
+    /// <param name="mainMethod">Application main method</param>
     /// <param name="width">Width of the canvas</param>
     /// <param name="height">Height of the canvas</param>
     /// <param name="clickAction">An optional callback for handling user clicks</param>
     /// <param name="windowTitle">Title of the window</param>
-    public static async Task Init(int width, int height,
-                                  Action<ClickEvent>? clickAction = null,
-                                  string windowTitle = Config.DefaultWindowTitle)
+    public static void Init(Action mainMethod, int width, int height,
+                            Action<ClickEvent>? clickAction = null,
+                            string windowTitle = Config.DefaultWindowTitle)
     {
         if (_initDone)
         {
@@ -67,11 +68,44 @@ public static class LeoCanvas
         Config.Height = height;
         Config.WindowTitle = windowTitle;
 
-        await OpenWindow();
+        Task.Run(async () =>
+        {
+            try
+            {
+                var initialDelay = TimeSpan.FromSeconds(0.5D);
+                var finalDelay = TimeSpan.FromSeconds(1);
+                var delay = TimeSpan.FromMilliseconds(50);
+                var maxWaitTime = TimeSpan.FromSeconds(10);
 
-        _initDone = true;
+                await Task.Delay(initialDelay);
 
-        Clear();
+                var waitStartTime = DateTime.Now;
+                var waitEndTime = waitStartTime + maxWaitTime;
+                while (!_windowInitialized && DateTime.Now < waitEndTime)
+                {
+                    await Task.Delay(delay);
+                }
+
+                if (!_windowInitialized)
+                {
+                    Console.WriteLine("Failed to initialize application window!");
+                }
+                else
+                {
+                    await Task.Delay(finalDelay);
+                    _initDone = true;
+
+                    Clear();
+                    mainMethod();
+                }
+            } 
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in console-app thread: {e.Message}");
+            }
+        });
+        
+        TriggerWindowCreation();
     }
 
     /// <summary>
@@ -356,50 +390,19 @@ public static class LeoCanvas
         _refreshWindow = refreshWindow;
     }
 
-    private static async Task OpenWindow()
-    {
-        var initialDelay = TimeSpan.FromSeconds(1);
-        var finalDelay = TimeSpan.FromSeconds(1);
-        var delay = TimeSpan.FromMilliseconds(50);
-        var maxWaitTime = TimeSpan.FromSeconds(10);
-
-        TriggerWindowCreation();
-
-        await Task.Delay(initialDelay);
-
-        var waitStartTime = DateTime.Now;
-        var waitEndTime = waitStartTime + maxWaitTime;
-        while (!_windowInitialized && DateTime.Now < waitEndTime)
-        {
-            await Task.Delay(delay);
-        }
-
-        if (!_windowInitialized)
-        {
-            Console.WriteLine("Failed to initialize application window!");
-        }
-        else
-        {
-            await Task.Delay(finalDelay);
-        }
-    }
-
     private static void TriggerWindowCreation()
     {
-        Task.Run(() =>
+        try
         {
-            try
-            {
-                var exitCode = BuildAvaloniaApp()
-                    .StartWithClassicDesktopLifetime([]);
-                Console.WriteLine($"Window exited with code {exitCode}");
-            }
-            catch (Exception e)
-            {
-                _windowInitialized = false;
-                Console.WriteLine($"Failed to initialize the window: {e.Message}");
-            }
-        });
+            var exitCode = BuildAvaloniaApp()
+                .StartWithClassicDesktopLifetime([]);
+            Console.WriteLine($"Window exited with code {exitCode}");
+        }
+        catch (Exception e)
+        {
+            _windowInitialized = false;
+            Console.WriteLine($"Failed to initialize the window: {e.Message}");
+        }
 
         return;
 

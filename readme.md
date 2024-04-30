@@ -7,7 +7,7 @@
   - via [Avalonia UI](https://github.com/AvaloniaUI/Avalonia)
 - User click events are registered
 
-This library is meant for simple applications so only basic functions are available to keep the API easy to use.
+This library is meant for simple applications, so only basic functions are available to keep the API easy to use.
 
 ## Sample Usage
 
@@ -17,40 +17,52 @@ using Avalonia.Media;
 using SimpleDrawing;
 using SimpleDrawing.Core;
 
-await LeoCanvas.Init(400, 400, clickAction: DrawCircleOnClick);
+LeoCanvas.Init(400, 400, clickAction: DrawCircleOnClick);
 
-LeoCanvas.DrawLine(new(100, 100), new(300, 300));
-LeoCanvas.DrawLine(new(300, 100), new(100, 300), thickness: 4, color: Brushes.Green);
-LeoCanvas.DrawRectangle(new(50, 50), new(100, 80), lineColor: Brushes.Red);
-LeoCanvas.DrawRectangle(new(325, 325), new(375, 375), fillColor: Brushes.Azure);
-LeoCanvas.DrawEllipse(new(200, 300), 50, 75, 
-                   lineColor: Brushes.Firebrick, fillColor: Brushes.Firebrick);
-LeoCanvas.DrawCircle(new(350, 75), 40, lineThickness: 2.5D, 
-                  lineColor: Brushes.BlueViolet, fillColor: Brushes.Gold);
-LeoCanvas.DrawText(new(25, 350), "Hello World", 24, Brushes.Lime);
+return;
 
-LeoCanvas.Render();
-
-LeoCanvas.DrawLine(new(200, 25), new(200, 375), 8);
-LeoCanvas.Render();
-
-await Task.Delay(TimeSpan.FromSeconds(2));
-LeoCanvas.Clear();
-var x = 50;
-for (var i = 0; i < 10; i++)
+static async void Run()
 {
-    LeoCanvas.DrawLine(new(x, 25), new(x, 375), 8);
-    x += 25;
-    LeoCanvas.Render();
-    await Task.Delay(TimeSpan.FromSeconds(1));
+    try
+    {
+        LeoCanvas.DrawLine(new(100, 100), new(300, 300));
+        LeoCanvas.DrawLine(new(300, 100), new(100, 300), thickness: 4, color: Brushes.Green);
+        LeoCanvas.DrawRectangle(new(50, 50), new(100, 80), lineColor: Brushes.Red);
+        LeoCanvas.DrawRectangle(new(325, 325), new(375, 375), fillColor: Brushes.Azure);
+        LeoCanvas.DrawEllipse(new(200, 300), 50, 75,
+                              lineColor: Brushes.Firebrick, fillColor: Brushes.Firebrick);
+        LeoCanvas.DrawCircle(new(350, 75), 40, lineThickness: 2.5D,
+                             lineColor: Brushes.BlueViolet, fillColor: Brushes.Gold);
+        LeoCanvas.DrawText(new(25, 350), "Hello World", 24, Brushes.Lime);
+
+        LeoCanvas.Render();
+
+        LeoCanvas.DrawLine(new(200, 25), new(200, 375), 8);
+        LeoCanvas.Render();
+
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        LeoCanvas.Clear();
+        var x = 50;
+        for (var i = 0; i < 10; i++)
+        {
+            LeoCanvas.DrawLine(new(x, 25), new(x, 375), 8);
+            x += 25;
+            LeoCanvas.Render();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+
+        var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Data/logo.png");
+        LeoCanvas.DrawImageAtLocation(imagePath, new(50, 100), new(350, 175));
+        LeoCanvas.Render();
+
+        Console.Write("Press any key to exit...");
+        Console.ReadKey();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
 }
-
-var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Data/logo.png");
-LeoCanvas.DrawImageAtLocation(imagePath, new(50, 100), new (350, 175));
-LeoCanvas.Render();
-
-Console.Write("Press any key to exit...");
-Console.ReadKey();
 
 static void DrawCircleOnClick(ClickEvent @event)
 {
@@ -65,12 +77,17 @@ static void DrawCircleOnClick(ClickEvent @event)
 }
 ```
 
+### Main Method
+
+To also support macOS (which requires the UI thread to be the main thread), it is necessary to pass the actual main method to the `LeoCanvas.Init` method.
+It will be run in a background thread, hiding most of the complexity from the students, but this method reference is a technical necessity.
+
 ## Click Events
 
 An `Action` can be passed to the `Init` function to register a click handler which will receive the location the user clicked within the canvas as well as information if the left or right mouse button was used.
 
 ```csharp
-await LeoCanvas.Init(600, 600, clickAction: DrawCircleOnClick);
+LeoCanvas.Init(Run, 600, 600, clickAction: DrawCircleOnClick);
 
 static void DrawCircleOnClick(ClickEvent @event)
 {
