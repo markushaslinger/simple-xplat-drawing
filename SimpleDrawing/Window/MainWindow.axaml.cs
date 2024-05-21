@@ -9,6 +9,7 @@ namespace SimpleDrawing.Window;
 internal partial class MainWindow : Avalonia.Controls.Window
 {
     private const double WindowExtraSize = 6D;
+    private static readonly object refreshMutex = new();
 
     public Thickness CanvasMargin
     {
@@ -43,18 +44,30 @@ internal partial class MainWindow : Avalonia.Controls.Window
 
     private void Refresh()
     {
-        Dispatcher.UIThread.Post(() =>
+        Task.Run(() =>
         {
-            try
+            lock (refreshMutex)
             {
-                InvalidateVisual();
-                MainCanvas.InvalidateVisual();
-            } 
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
+                using var @event = new ManualResetEventSlim();
+                Dispatcher.UIThread.Post(() =>
+                {
+                    try
+                    {
+                        InvalidateVisual();
+                        MainCanvas.InvalidateVisual();
+                        
+                        // ReSharper disable once AccessToDisposedClosure - we are waiting for the set before disposing
+                        @event.Set();
+                    } 
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                }, DispatcherPriority.MaxValue);
+
+                @event.Wait();
             }
-        }, DispatcherPriority.MaxValue);
+        });
     }
 
     private void HandleClick(object? sender, PointerPressedEventArgs e)
