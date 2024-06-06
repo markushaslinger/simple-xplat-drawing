@@ -50,14 +50,14 @@ static async void Run()
     }
 }
 
-static void DrawCircleOnClick(ClickEvent @event)
+static void DrawCircleOnClick(ClickEvent clickEvent)
 {
-    var radius = @event.Button switch
+    var radius = clickEvent.Button switch
     {
         MouseButton.Left => 25,
         MouseButton.Right => 50,
         _ => 10
     };
-    LeoCanvas.DrawCircle(@event.ClickedPoint, radius);
+    LeoCanvas.DrawCircle(clickEvent.ClickedPoint, radius);
     LeoCanvas.Render();
 }
