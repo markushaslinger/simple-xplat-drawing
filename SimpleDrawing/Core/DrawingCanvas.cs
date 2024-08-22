@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Media;
 
 namespace SimpleDrawing.Core;
@@ -8,10 +7,10 @@ internal sealed class DrawingCanvas: UserControl
 {
     public override void Render(DrawingContext context)
     {
-        ImmutableArray<DrawTask> renderTasks;
+        IReadOnlyCollection<DrawTask> renderTasks;
         lock (LeoCanvas.Mutex)
         {
-            renderTasks = LeoCanvas.Tasks.ToImmutableArray();
+            renderTasks = [..LeoCanvas.Tasks];
         }
         
         foreach (var drawTask in renderTasks)
