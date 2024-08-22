@@ -11,6 +11,19 @@ internal partial class MainWindow : Avalonia.Controls.Window
     private const double WindowExtraSize = 6D;
     private static readonly object refreshMutex = new();
 
+    public MainWindow()
+    {
+        Width = Config.Width + WindowExtraSize;
+        Height = Config.Height + WindowExtraSize;
+        MinWidth = Width;
+        MinHeight = Height;
+
+        InitializeComponent();
+
+        Title = Config.WindowTitle;
+        CanResize = false;
+    }
+
     public Thickness CanvasMargin
     {
         get
@@ -21,30 +34,31 @@ internal partial class MainWindow : Avalonia.Controls.Window
         }
     }
 
-    public MainWindow()
-    {
-        Width = Config.Width + WindowExtraSize;
-        Height = Config.Height + WindowExtraSize;
-        MinWidth = Width;
-        MinHeight = Height;
-
-        InitializeComponent();
-        
-        Title = Config.WindowTitle;
-        CanResize = false;
-    }
-
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
         MainCanvas.PointerPressed += HandleClick;
-        
+
         LeoCanvas.SetWindowInitialized(Refresh);
     }
 
     private void Refresh()
     {
         Task.Run(() =>
+        {
+            try
+            {
+                DoRefresh();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        });
+
+        return;
+
+        void DoRefresh()
         {
             lock (refreshMutex)
             {
@@ -55,10 +69,10 @@ internal partial class MainWindow : Avalonia.Controls.Window
                     {
                         InvalidateVisual();
                         MainCanvas.InvalidateVisual();
-                        
+
                         // ReSharper disable once AccessToDisposedClosure - we are waiting for the set before disposing
                         @event.Set();
-                    } 
+                    }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
@@ -67,7 +81,7 @@ internal partial class MainWindow : Avalonia.Controls.Window
 
                 @event.Wait();
             }
-        });
+        }
     }
 
     private void HandleClick(object? sender, PointerPressedEventArgs e)
