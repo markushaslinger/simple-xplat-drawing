@@ -2,11 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:simpleXPlatDrawing="clr-namespace:SimpleDrawing"
         xmlns:core="clr-namespace:SimpleDrawing.Core"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SimpleDrawing.Window.MainWindow"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        Topmost="True"
         Title="Simple Drawing">
     <core:DrawingCanvas Name="MainCanvas" Margin="{Binding CanvasMargin}" />
 </Window>
