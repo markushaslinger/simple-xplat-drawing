@@ -281,8 +281,9 @@ public static class LeoCanvas
     /// <param name="image">The image to draw</param>
     /// <param name="topLeft">Top left corner of the destination rectangle</param>
     /// <param name="bottomRight">Bottom right corner of the destination rectangle</param>
+    /// <param name="rotationAngles">The rotation of the image in euler angles</param>
     /// <returns>True if the image config is valid; false otherwise</returns>
-    public static bool DrawImageAtLocation(IImage image, Point topLeft, Point bottomRight)
+    public static bool DrawImageAtLocation(IImage image, Point topLeft, Point bottomRight, double rotationAngles = 0D)
     {
         if (!_initDone
             || !ValidateRectPoints(topLeft, bottomRight))
@@ -290,7 +291,7 @@ public static class LeoCanvas
             return false;
         }
         
-        AddTask(new ImageDrawTask(image, new Rect(topLeft, bottomRight)));
+        AddTask(new ImageDrawTask(image, new Rect(topLeft, bottomRight), rotationAngles));
         
         return true;
     }
@@ -302,12 +303,13 @@ public static class LeoCanvas
     /// <param name="imagePath">Absolute path to the image file</param>
     /// <param name="topLeft">Top left corner of the destination rectangle</param>
     /// <param name="bottomRight">Bottom right corner of the destination rectangle</param>
+    /// <param name="rotationAngles">The rotation of the image in euler angles</param>
     /// <returns>True if the image is found and the config is valid; false otherwise</returns>
-    public static bool DrawImageAtLocation(string imagePath, Point topLeft, Point bottomRight)
+    public static bool DrawImageAtLocation(string imagePath, Point topLeft, Point bottomRight, double rotationAngles = 0D)
     {
         if (TryLoadImage(imagePath, out var image) && image is not null)
         {
-            return DrawImageAtLocation(image, topLeft, bottomRight);
+            return DrawImageAtLocation(image, topLeft, bottomRight, rotationAngles);
         }
         
         return false;

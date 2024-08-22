@@ -5,6 +5,7 @@ using Avalonia.Media;
 namespace SimpleDrawing.Core;
 
 internal delegate Pen PenFactory(PenConfig config);
+
 internal readonly record struct PenConfig(IBrush Color, double Thickness, PenLineCap LineCap);
 
 internal abstract class DrawTask(double thickness, IBrush color)
@@ -65,7 +66,11 @@ internal sealed class TextDrawTask(Point origin, string text, double emSize, IBr
     }
 }
 
-internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thickness, IBrush lineColor, IBrush? fillColor)
+internal sealed class PathDrawTask(
+    IReadOnlyList<Point> pathPoints,
+    double thickness,
+    IBrush lineColor,
+    IBrush? fillColor)
     : DrawTask(thickness, lineColor)
 {
     public override void DrawSelf(DrawingContext context, PenFactory penFactory)
@@ -93,10 +98,33 @@ internal sealed class PathDrawTask(IReadOnlyList<Point> pathPoints, double thick
     }
 }
 
-internal sealed class ImageDrawTask(IImage image, Rect location) : DrawTask(LeoCanvas.DefaultThickness, LeoCanvas.DefaultBrush)
+internal sealed class ImageDrawTask(IImage image, Rect location, double rotationAngle)
+    : DrawTask(LeoCanvas.DefaultThickness, LeoCanvas.DefaultBrush)
 {
+    private readonly double _rotationAngleRadians = Math.PI * Math.Clamp(rotationAngle, 0D, 360D) / 180D;
+
     public override void DrawSelf(DrawingContext context, PenFactory penFactory)
     {
-        context.DrawImage(image, location);
+        if (Math.Abs(_rotationAngleRadians) < double.Epsilon)
+        {
+            context.DrawImage(image, location);
+
+            return;
+        }
+
+        using (PrepareRotationMatrix(context))
+        {
+            context.DrawImage(image, location);
+        }
+    }
+
+    private DrawingContext.PushedState PrepareRotationMatrix(DrawingContext context)
+    {
+        var locationCenter = new Point(location.X + location.Width / 2D, location.Y + location.Height / 2D);
+        var rotationTransform = Matrix.CreateTranslation(-locationCenter.X, -locationCenter.Y) *
+                                Matrix.CreateRotation(_rotationAngleRadians) *
+                                Matrix.CreateTranslation(locationCenter.X, locationCenter.Y);
+
+        return context.PushTransform(rotationTransform);
     }
 }

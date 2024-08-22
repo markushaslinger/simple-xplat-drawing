@@ -38,7 +38,7 @@ static async void Run()
         }
 
         var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Data/logo.png");
-        LeoCanvas.DrawImageAtLocation(imagePath, new(50, 100), new(350, 175));
+        LeoCanvas.DrawImageAtLocation(imagePath, new(50, 100), new(350, 175), 45);
         LeoCanvas.Render();
 
         Console.Write("Press any key to exit...");
