@@ -31,6 +31,7 @@ public static class LeoCanvas
     internal static readonly IBrush WhiteBrush = Brushes.White;
     internal static readonly object Mutex;
     internal static readonly List<DrawTask> Tasks;
+    private static readonly Dictionary<Type, HashSet<int>> existingTaskHashes = new();
     private static bool _initDone;
     private static bool _windowInitialized;
     private static Action? _refreshWindow;
@@ -98,13 +99,13 @@ public static class LeoCanvas
                     Clear();
                     mainMethod();
                 }
-            } 
+            }
             catch (Exception e)
             {
                 Console.WriteLine($"Error in console-app thread: {e.Message}");
             }
         });
-        
+
         TriggerWindowCreation();
     }
 
@@ -290,9 +291,9 @@ public static class LeoCanvas
         {
             return false;
         }
-        
+
         AddTask(new ImageDrawTask(image, new Rect(topLeft, bottomRight), rotationAngles));
-        
+
         return true;
     }
 
@@ -305,13 +306,14 @@ public static class LeoCanvas
     /// <param name="bottomRight">Bottom right corner of the destination rectangle</param>
     /// <param name="rotationAngles">The rotation of the image in euler angles</param>
     /// <returns>True if the image is found and the config is valid; false otherwise</returns>
-    public static bool DrawImageAtLocation(string imagePath, Point topLeft, Point bottomRight, double rotationAngles = 0D)
+    public static bool DrawImageAtLocation(string imagePath, Point topLeft, Point bottomRight,
+                                           double rotationAngles = 0D)
     {
         if (TryLoadImage(imagePath, out var image) && image is not null)
         {
             return DrawImageAtLocation(image, topLeft, bottomRight, rotationAngles);
         }
-        
+
         return false;
     }
 
@@ -325,7 +327,7 @@ public static class LeoCanvas
     {
         var imageLoader = ImageLoader.FromPath(imageFilePath);
         image = null;
-        
+
         switch (imageLoader.ImageState)
         {
             case ImageLoader.State.Uninitialized:
@@ -351,9 +353,12 @@ public static class LeoCanvas
             case ImageLoader.State.Loaded when imageLoader.Image is not null:
             {
                 image = imageLoader.Image;
+
                 return true;
             }
-            default: throw new ArgumentOutOfRangeException(nameof(imageLoader.ImageState), imageLoader.ImageState, "Unknown image loading state");
+            default:
+                throw new ArgumentOutOfRangeException(nameof(imageLoader.ImageState), imageLoader.ImageState,
+                                                      "Unknown image loading state");
         }
     }
 
@@ -365,6 +370,7 @@ public static class LeoCanvas
         lock (Mutex)
         {
             Tasks.Clear();
+            existingTaskHashes.Clear();
             PrepareBackground();
         }
     }
@@ -415,12 +421,35 @@ public static class LeoCanvas
                       .LogToTrace();
     }
 
-    private static void AddTask(DrawTask task)
+    private static void AddTask<T>(T task) where T : DrawTask
     {
         lock (Mutex)
         {
             Tasks.Add(task);
         }
+        
+        /*var hash = task.GetHashCode();
+        var type = typeof(T);
+        lock (Mutex)
+        {
+            var addTask = true;
+            if (!existingTaskHashes.TryGetValue(type, out var existingHashes))
+            {
+                existingTaskHashes[type] = [hash];
+            }
+            else
+            {
+                if (!existingHashes.Add(hash))
+                {
+                    addTask = false;
+                }
+            }
+
+            if (addTask)
+            {
+                Tasks.Add(task);
+            }
+        }*/
     }
 
     private static bool ValidatePoints(params Point[] points) => ValidatePoints(points.AsEnumerable());
